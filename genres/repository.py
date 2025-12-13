@@ -15,7 +15,7 @@ class GenreRepository:
         
     def get_genres(self):
         response = requests.get(
-            self.__genres_url,
+            self.__auth_url,
             headers=self.__headers,
         )
         if response.status_code == 200:
@@ -28,7 +28,7 @@ class GenreRepository:
     
     def create_genre(self, genre):
         response = requests.post(
-            self.__genres_url,
+            self.__auth_url,
             headers=self.__headers,
             data=genre
         )
