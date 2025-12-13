@@ -31,7 +31,9 @@ flix-app/
 │   └── service.py     # Funções de autenticação
 ├── movies/            # Módulo de filmes
 │   ├── __init__.py
-│   └── page.py        # Interface de usuário para filmes
+│   ├── page.py        # Interface de usuário para filmes
+│   ├── repository.py  # Camada de acesso a dados para filmes
+│   └── services.py    # Lógica de negócio para filmes
 ├── reviews/           # Módulo de avaliações
 │   ├── __init__.py
 │   └── page.py        # Interface de usuário para avaliações
@@ -41,10 +43,10 @@ flix-app/
 
 ## Descrição das Pastas
 
-- **actors/**: Funcionalidade relacionada ao cadastro e listagem de atores
-- **api/**: Serviços de comunicação com API externa
-- **genres/**: Funcionalidade completa de gêneros com integração à API
-- **login/**: Sistema de autenticação e autorização
-- **movies/**: Funcionalidade relacionada ao cadastro e listagem de filmes
-- **reviews/**: Funcionalidade relacionada ao cadastro e listagem de avaliações
+- **actors/**: Funcionalidade relacionada ao cadastro e listagem de atores (CRUD completo)
+- **api/**: Serviços de comunicação com API externa (autenticação JWT)
+- **genres/**: Funcionalidade completa de gêneros com integração à API (CRUD completo)
+- **login/**: Sistema de autenticação e autorização (login/logout)
+- **movies/**: Funcionalidade relacionada ao cadastro e listagem de filmes (CRUD incompleto)
+- **reviews/**: Funcionalidade para avaliações de filmes (implementação parcial)
 - **docs/**: Documentação do projeto

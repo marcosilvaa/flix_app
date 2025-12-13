@@ -13,6 +13,7 @@ def show_movies():
     if movies:    
         st.write("Lista de Filmes")
         movies_df = pd.json_normalize(movies)
+        movies_df.drop(columns=['actors'])
         AgGrid(
             data=movies_df,
             key='movies_grid',
