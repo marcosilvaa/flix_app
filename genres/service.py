@@ -1,7 +1,5 @@
 from genres.repository import GenreRepository
 
-
-
 class GenreService:
     
     def __init__(self):
