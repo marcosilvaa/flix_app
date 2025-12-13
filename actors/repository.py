@@ -9,7 +9,7 @@ class ActorRepository:
         self.__base_url = 'https://marcosilva.pythonanywhere.com/api/v1/'
         self.__actors_url = f'{self.__base_url}actors/'
         self.__headers = {
-            'Authorization': f"Beares {st.session_state.token}"
+            'Authorization': f"Bearer {st.session_state.token}"
         }
         
     def get_actors(self):
@@ -25,8 +25,8 @@ class ActorRepository:
             return None
         raise Exception(f'Erro ao obter dados da API. Status Code: {response.status_code}')
     
-    def create_actor(self, actor):
-        response = requests.get(
+    def create_actor(self,actor):
+        response = requests.post(
             self.__actors_url,
             headers=self.__headers,
             data=actor,

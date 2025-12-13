@@ -1,7 +1,7 @@
 import streamlit as st 
 from login.page import show_login
 from genres.page import show_genres
-from actors.page import show_actors # type: ignore
+from actors.page import show_actors
 from movies.page import show_movies
 from reviews.page import show_reviews
 

@@ -10,9 +10,11 @@ class ActorService:
         return self.actor_repository.get_actors()
     
     
-    def create_actor(self, actor):
+    def create_actor(self, name, birthday, nationality):
         actor = dict(
-            name=actor,
+            name=name,
+            birthdate=birthday,
+            nationality=nationality,
         )
         return self.actor_repository.create_actor(actor)
     
