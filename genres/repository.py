@@ -12,6 +12,7 @@ class GenreRepository:
             'Authorization': f'Bearer {st.session_state.token}'
         }
         
+        
     def get_genres(self):
         response = requests.get(
             self.__genres_url,
@@ -24,7 +25,8 @@ class GenreRepository:
             return None
         raise Exception(f'Erro ao obter dados da API. Status Cod: {response.status_code}')
     
-    def create_genres(self, genre):
+    
+    def create_genre(self, genre):
         response = requests.post(
             self.__genres_url,
             headers=self.__headers,
