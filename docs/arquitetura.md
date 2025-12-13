@@ -80,6 +80,11 @@ class GenreRepository:
 
 ## Módulos da Aplicação
 
+### Módulo de API (`api/`)
+- **service.py**: Contém o serviço de autenticação JWT para comunicação com a API externa
+- **Classe `Auth`**: Gerencia obtenção de tokens JWT via endpoint `/authentication/token/`
+- **Responsabilidades**: Comunicação de autenticação, tratamento de credenciais e resposta de tokens
+
 ### Módulo de Login (`login/`)
 - **page.py**: Contém a interface de login com campos de usuário e senha
 - **service.py**: Lida com a autenticação JWT, armazenamento do token e logout
@@ -101,9 +106,6 @@ class GenreRepository:
 
 ### Módulo de Avaliações (`reviews/`)
 - **page.py**: Exibe lista de avaliações e formulário para criação (implementação parcial)
-
-### Módulo de API (`api/`)
-- **service.py**: Contém o serviço de autenticação JWT para comunicação com a API externa
 
 ## Fluxo de Autenticação
 

@@ -160,3 +160,11 @@ raise Exception(f'Erro ao obter dados da API. Status Code: {response.status_code
 5. **Normalização de Dados**: Uso de `pd.json_normalize()` para padronizar dados antes de exibição em AgGrid
 6. **Tratamento de Casos Vazios**: Verificação de dados nulos/vazios antes da exibição
 7. **Validação de Formulários**: Inputs com validação apropriada (data limits, etc.)
+8. **Verificação de Nomenclatura**: Cuidado com nomes de variáveis semelhantes para evitar erros de digitação (ex: `__genres_url` vs `__genress_url`)
+
+## Erros Comuns a Evitar
+
+- Erros de digitação em nomes de variáveis (typos), especialmente em URLs de API
+- Uso inconsistente de nomes de variáveis entre diferentes métodos
+- Esquecer de atualizar URLs ou endpoints quando mudam na API externa
+- Não testar adequadamente o fluxo de autenticação e tratamento de tokens
