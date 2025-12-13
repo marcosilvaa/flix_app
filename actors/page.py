@@ -4,11 +4,12 @@ from st_aggrid import AgGrid
 from actors.service import ActorService
 from datetime import datetime
 
+
 def show_actors():
     actor_serivce = ActorService()
     actors = actor_serivce.get_actors()
 
-    if actors:    
+    if actors:
         st.write("Lista de Atores")
         actors_df = pd.json_normalize(actors)
         AgGrid(
@@ -22,17 +23,17 @@ def show_actors():
         )
     else:
         st.warning("Nenhum Ator/Atriz encontrado")
-    
+
     st.title("Cadastrar novo Ator")
     name = st.text_input('Nome do ator')
     birthday = st.date_input(
         label='Data de Nascimento',
         value=datetime.today(),
-        min_value=datetime(1900,1,1).date(),
+        min_value=datetime(1900, 1, 1).date(),
         max_value=datetime.today(),
         format='DD/MM/YYYY'
     )
-    nationality_dropdown = ['BRAZIL','USA']
+    nationality_dropdown = ['BRAZIL', 'USA']
     nationality = st.selectbox(
         label='Nacionalidade',
         options=nationality_dropdown,

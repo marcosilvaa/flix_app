@@ -1,12 +1,12 @@
 import streamlit as st
 from genres.repository import GenreRepository
 
+
 class GenreService:
-    
+
     def __init__(self):
         self.genre_repository = GenreRepository()
-    
-    
+
     def get_genres(self):
         if 'genres' in st.session_state:
             return st.session_state.genres
@@ -14,7 +14,6 @@ class GenreService:
         st.session_state.genres = genres
         return genres
 
-    
     def create_genre(self, name):
         genre = dict(
             name=name,
