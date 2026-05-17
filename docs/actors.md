@@ -1,94 +1,99 @@
-# Módulo de Atores
+# Modulo de Atores
 
-O módulo de atores é responsável pelo cadastro e listagem de atores na aplicação Flix App, permitindo o gerenciamento de informações de elenco para associação com os filmes.
+O modulo de atores e responsavel pelo cadastro e listagem de atores na aplicacao Flix App, permitindo o gerenciamento de informacoes de elenco para associacao com filmes.
 
-## Visão Geral
+## Visao Geral
 
-O módulo de atores gerencia:
-- Listagem de atores cadastrados com informações detalhadas
+O modulo de atores gerencia:
+- Listagem de atores cadastrados via API
 - Cadastro de novos atores com nome, data de nascimento e nacionalidade
-- Integração com o módulo de filmes para associação de elenco
-- Exibição de dados em formato tabular com AgGrid
+- Cache de dados em sessao do Streamlit
+- Exibicao de dados em formato tabular com AgGrid
 
-## Estrutura do Módulo
-
-O módulo está organizado da seguinte forma:
+## Estrutura do Modulo
 
 ```
 actors/
 ├── __init__.py
-├── page.py        # Interface de usuário para atores
-├── service.py     # Lógica de negócio para atores
-└── repository.py  # Camada de acesso a dados para atores
+├── page.py        # Interface de usuario para atores (show_actors)
+├── service.py     # Logica de negocio (ActorService)
+└── repository.py  # Comunicacao com a API (ActorRepository)
 ```
 
 ## Componentes
 
 ### page.py
-- **Função**: `show_actors()`
+
+- **Funcao**: `show_actors()`
 - **Responsabilidade**: Exibir a interface de listagem e cadastro de atores
-- **Características**:
-  - Exibe lista de atores em formato tabular com AgGrid
-  - Formulário para cadastro de novos atores com campos:
-    - Nome do ator
-    - Data de nascimento (com validação de range)
-    - Nacionalidade (dropdown com opções fixas)
-  - Tratamento de casos vazios com mensagem de aviso
-  - Feedback para o usuário após operações de cadastro
+- **Caracteristicas**:
+  - Exibe lista de atores em formato tabular com AgGrid (key `actors_grid`)
+  - AgGrid com opcoes: `columns_auto_size_mode=True`, `enableSorting=True`, `enableFilter=True`, `enableColResize=True`
+  - Formulario para cadastro de novos atores com campos:
+    - Nome do ator (text_input)
+    - Data de nascimento (date_input: min 01/01/1900, max hoje, formato DD/MM/YYYY)
+    - Nacionalidade (selectbox: opcoes fixas `BRAZIL`, `USA`)
+  - Tratamento de casos vazios com `st.warning()`
+  - Feedback de sucesso ou erro apos cadastro
+  - Recarregamento automatico via `st.rerun()`
+- **Problema conhecido**: Variavel nomeada `actor_serivce` na linha 9 — typo, deveria ser `actor_service`
 
 ### service.py
+
 - **Classe**: `ActorService`
-- **Responsabilidade**: Implementar a lógica de negócios para atores
-- **Características**:
-  - Método `get_actors()`: Obtém a lista de atores da API
-  - Método `create_actor()`: Prepara e envia dados para cadastro de ator
-  - Integração com o repositório para comunicação com a API
-  - Preparação de dados antes de enviar à camada de repositório
+- **Responsabilidade**: Implementar a logica de negocio para atores
+- **Metodos**:
+  - `get_actors()`: Busca atores com cache em `st.session_state.actors`
+  - `create_actor(name, birthday, nationality)`: Cria dict `{'name': name, 'birthdate': birthday, 'nationality': nationality}`, envia ao repositorio e adiciona ao cache
+- **Injecao de dependencia**: `ActorRepository` instanciado no `__init__`
+- **Bug conhecido**: No metodo `create_actor()`, linha 24, `return actor` retorna o dict de entrada em vez de `return new_actor` (resposta da API)
 
 ### repository.py
+
 - **Classe**: `ActorRepository`
-- **Responsabilidade**: Comunicar-se com a API externa para operações de atores
-- **Características**:
-  - URL base e headers configurados com token de autenticação
-  - Métodos para obtenção e criação de atores na API
-  - Tratamento de respostas HTTP (200, 201, 401)
-  - Encapsulamento de detalhes de comunicação com a API
-  - Chamada à função `logout()` em caso de falha de autenticação (401)
+- **Responsabilidade**: Comunicar-se com a API externa para operacoes de atores
+- **URL**: `http://localhost:8000/api/v1/actors/`
+- **Headers**: `Authorization: Bearer {token}` de `st.session_state.token`
+- **Metodos**:
+  - `get_actors()`: GET para listar atores (status 200 → JSON, 401 → logout, outros → Exception)
+  - `create_actor(actor)`: POST para criar ator (status 201 → JSON, 401 → logout, outros → Exception)
 
 ## Funcionalidades
 
 ### Listagem de Atores
-- Exibe atores em formato tabular interativo com AgGrid
-- Suporte para ordenação, filtragem e redimensionamento de colunas
-- Tratamento de caso vazio com mensagem amigável ao usuário
-- Atualização automática após operações de criação
+
+- Busca atores via `ActorService` com cache em session_state
+- Exibe em tabela AgGrid com ordenacao, filtragem e redimensionamento de colunas
+- Tratamento de caso vazio com `st.warning("Nenhum Ator/Atriz encontrado")`
 
 ### Cadastro de Atores
-- Formulário com validações de dados (datas, campos obrigatórios)
-- Validação de data de nascimento (intervalo de 1900 até data atual)
-- Opções de nacionalidade pré-definidas (BRAZIL, USA)
-- Feedback visual de sucesso ou erro após tentativa de cadastro
 
-## Integrações
+- Campo de texto para nome
+- Date input com intervalo de 01/01/1900 ate hoje (formato DD/MM/YYYY)
+- Selectbox de nacionalidade com opcoes fixas: `BRAZIL` e `USA`
+- Feedback de sucesso: `st.success(f"Ator '{name}' cadastrado com sucesso!")`
+- Recarregamento via `st.rerun()`
 
-### Com Módulo de Filmes
-- Importação de `ActorService` para obtenção da lista de atores
-- Criação de mapeamento nome:id para seleção no formulário de filme
-- Associação de atores ao elenco de filmes
+## Integracao com Outros Modulos
 
-## Componentes de UI
+### Modulo de Filmes
 
-- **AgGrid**: Componente para exibição tabular interativa de atores
-- **Campos de Texto**: Nome do ator
-- **Date Input**: Data de nascimento com validação de range
-- **Dropdown**: Nacionalidade com opções pré-definidas
-- **Botões**: Cadastro de novo ator
-- **Mensagens**: Feedback de sucesso ou erro para o usuário
+- `movies/page.py` importa `ActorService` para obter lista de atores
+- Cria mapeamento `nome:id` para multiselect de atores no formulario de filme
+- Permite associacao multipla de atores ao elenco de um filme
 
-## Padrões de Código
+## Bugs Conhecidos
 
-- Função de página segue padrão `show_nome_modulo`
-- Serviço implementa injeção de dependência do repositório
-- Repositório encapsula URLs e headers de autenticação
+| Arquivo | Linha | Descricao |
+|---------|-------|-----------|
+| `actors/page.py` | 9 | Variavel `actor_serivce` — typo, deveria ser `actor_service` |
+| `actors/service.py` | 24 | `return actor` retorna o dict de entrada em vez de `return new_actor` (resposta da API) |
+
+## Padroes de Codigo
+
+- Funcao de pagina segue padrao `show_<modulo>()`
+- Servico implementa injecao de dependencia do repositorio
+- Repositorio encapsula URLs e headers de autenticacao
 - Tratamento consistente de erros HTTP
-- Normalização de dados com `pd.json_normalize()` para exibição
+- Normalizacao de dados com `pd.json_normalize()` para exibicao no AgGrid
+- Cache em `st.session_state` para evitar chamadas repetidas

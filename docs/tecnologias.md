@@ -1,68 +1,101 @@
 # Tecnologias Utilizadas
 
-Este documento lista as tecnologias, frameworks e bibliotecas utilizadas no projeto Flix App.
+Este documento lista as tecnologias, frameworks e bibliotecas utilizados no projeto Flix App.
 
-## Dependências do Projeto
+## Dependencias Principais
 
-As dependências estão especificadas no arquivo `pyproject.toml`:
+As dependencias estao definidas no `pyproject.toml`:
 
-- **Python**: >=3.14
-- **Streamlit**: >=1.52.1 (Framework para interface gráfica)
-- **requests**: >=2.32.5 (Para chamadas HTTP à API externa)
-- **streamlit-aggrid**: >=1.2.1 (Para componentes de grade de dados)
-- **pandas**: Manipulação e normalização de dados
+| Pacote | Versao | Funcao |
+|--------|--------|--------|
+| Python | >=3.14 | Linguagem de programacao |
+| Streamlit | >=1.52.1 | Framework web para interface grafica |
+| requests | >=2.32.5 | Chamadas HTTP a API externa |
+| streamlit-aggrid | >=1.2.1 | Tabelas interativas (AgGrid) |
+| plotly | >=6.5.0 | Graficos e visualizacoes (dashboard Home) |
+| flake8 | >=7.3.0 | Linter (tambem e dependencia de desenvolvimento) |
 
-## Frameworks e Bibliotecas
+## Dependencias de Desenvolvimento
 
-### Streamlit
-- Framework utilizado para criar a interface web
-- Permite desenvolvimento rápido de aplicações web com Python
-- Utiliza sessões para manter estado entre interações
-- Oferece diversos componentes de UI (inputs, botões, tabelas, etc.)
+| Pacote | Versao | Funcao |
+|--------|--------|--------|
+| flake8 | 7.3.0 | Linter de codigo Python |
 
-### Pandas
-- Usado para manipulação e normalização de dados
-- Facilita a conversão de dados para formato adequado para exibição em tabelas
-- Função `json_normalize()` usada para converter JSONs complexos em DataFrames
-- Integração com Streamlit-AgGrid para exibição de dados
+Configuracao do flake8 em `.flake8`: ignora regra E501 (linhas longas), exclui diretorio `.venv`.
 
-### Requests
-- Biblioteca para realização de requisições HTTP
-- Utilizada para comunicação com a API externa
-- Tratamento de cabeçalhos e autenticação JWT
-- Manipulação de diferentes códigos de resposta HTTP
+## Bibliotecas Transistivas Relevantes
 
-### Streamlit-AgGrid
-- Componente para exibição de dados em formato de tabela interativa
-- Integração com Streamlit
-- Suporte para recarregamento de dados, ordenação, filtragem e redimensionamento de colunas
-- Baseado na biblioteca Ag-Grid JavaScript
-
-### Datetime
-- Biblioteca padrão Python para manipulação de datas
-- Utilizada para inputs de data com validação de range (ex: datas de nascimento)
-
-## Infraestrutura
-
-### API Externa
-- Localização: https://marcosilva.pythonanywhere.com/api/v1/
-- Protocolo: REST API
-- Autenticação: JWT (JSON Web Tokens)
-- Endpoints: authentication/token/, genres/, actors/, movies/, etc.
-- Formato de dados: JSON
+| Pacote | Funcao |
+|--------|--------|
+| pandas | Manipulacao e normalizacao de dados (`pd.json_normalize()`) |
+| numpy | Calculo numerico (dependencia do pandas e plotly) |
 
 ## Gerenciamento de Pacotes
 
-O projeto utiliza o sistema moderno de gerenciamento de pacotes Python:
+O projeto utiliza **uv** como gerenciador de pacotes:
 
-- **pyproject.toml**: Configuração do projeto e dependências
-- **uv.lock**: Lock file para garantir consistência nas dependências
-- **uv**: Gerenciador de pacotes Python (moderno e rápido)
+- `pyproject.toml` — Declaracao de dependencias e metadados do projeto
+- `uv.lock` — Lock file para reprodutibilidade
+- `uv sync` — Instala dependencias conforme o lock file
+- `uv run streamlit run app.py` — Executa a aplicacao
+- `uv run flake8 .` — Executa o linter
 
-## Patamares de Segurança
+Os arquivos `requirements.txt` e `requirements_dev.txt` sao exportacoes geradas por `uv export` e nao devem ser editados manualmente.
 
-### Autenticação JWT
-- Tokens armazenados na sessão do Streamlit
-- Validação automática em cada chamada à API
-- Redirecionamento automático para login em caso de token inválido
-- Sistema de logout que limpa toda a sessão
+## Framework e Bibliotecas
+
+### Streamlit
+
+- Framework principal para a interface web
+- Gerencia o estado da aplicacao via `st.session_state`
+- Fornece componentes de UI: inputs, botoes, selectbox, multiselect, date_input, text_area
+- Roteamento baseado em `st.sidebar.selectbox` no `app.py`
+- Recarregamento automatico via `st.rerun()` apos operacoes de escrita
+
+### Pandas
+
+- Usado exclusivamente para `pd.json_normalize()` — converte listas de dicts JSON em DataFrames para o AgGrid
+- Nao e usado para manipulacao de dados alem da normalizacao
+
+### Requests
+
+- Biblioteca para todas as chamadas HTTP a API externa
+- Usado nos repositorios com metodos `requests.get()` e `requests.post()`
+- Autenticacao via header `Authorization: Bearer <token>`
+
+### Streamlit-AgGrid
+
+- Componente para exibicao de dados em tabelas interativas
+- Parametros comuns: `data`, `key`, `reload_data`/`reload`, `columns_auto_size_mode`, `enableSorting`, `enableFilter`, `enableColResize`
+- Nao e usado para edicao de dados — apenas exibicao
+
+### Plotly
+
+- Usado no modulo `home/` para graficos de estatisticas
+- `plotly.express.pie()` para grafico de pizza de filmes por genero
+- Exibido via `st.plotly_chart()`
+
+### Datetime
+
+- Biblioteca padrao do Python para manipulacao de datas
+- Usado no modulo `actors/` e `movies/` para inputs de data com validacao de range
+
+## API Externa
+
+| Propriedade | Valor |
+|-------------|-------|
+| Repositorio | [https://github.com/marcosilvaa/flix_api](https://github.com/marcosilvaa/flix_api) |
+| URL base | `http://localhost:8000/api/v1/` |
+| Protocolo | REST API |
+| Autenticacao | JWT (JSON Web Tokens) |
+| Formato | JSON |
+| Endpoints | `/authentication/token/`, `/genres/`, `/actors/`, `/movies/`, `/movies/stats/`, `/reviews/` |
+
+## Configuracao
+
+| Arquivo | Conteudo |
+|---------|----------|
+| `config.toml` | `app_title = 'Flix App'` (nao e lido pelo codigo) |
+| `.flake8` | Exclui `.venv`, ignora E501 |
+| `.python-version` | `3.14` |
+| `.gitignore` | `__pycache__/`, `*.py[oc]`, `build/`, `dist/`, `wheels/`, `*.egg-info`, `.venv` |

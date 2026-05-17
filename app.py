@@ -12,31 +12,41 @@ def main():
     if 'token' not in st.session_state:
         show_login()
     else:
-        st.title("Flix App")
-        st.divider()
-
-        menu_option = st.sidebar.selectbox(
-            'Selecione uma opção',
-            ['Início', 'Gêneros', 'Atores', 'Filmes', 'Avaliações']
-        )
+        with st.sidebar:
+            st.image(
+                'https://img.icons8.com/fluency/96/movie-projector.png',
+                width=64,
+            )
+            st.title('Flix App')
+            menu_option = st.radio(
+                'Navegação',
+                ['Início', 'Gêneros', 'Atores', 'Filmes', 'Avaliações'],
+                format_func=lambda x: {
+                    'Início': '🏠 Início',
+                    'Gêneros': '🎭 Gêneros',
+                    'Atores': '🎬 Atores',
+                    'Filmes': '🎥 Filmes',
+                    'Avaliações': '⭐ Avaliações',
+                }[x],
+            )
+            st.divider()
+            if st.button('Sair', use_container_width=True):
+                from login.service import logout
+                logout()
 
         if menu_option == 'Início':
             show_home()
 
-        if menu_option == 'Gêneros':
-            st.write('Gêneros')
+        elif menu_option == 'Gêneros':
             show_genres()
 
-        if menu_option == 'Atores':
-            st.write('Atores')
+        elif menu_option == 'Atores':
             show_actors()
 
-        if menu_option == 'Filmes':
-            st.write('Filmes')
+        elif menu_option == 'Filmes':
             show_movies()
 
-        if menu_option == 'Avaliações':
-            st.write('Avaliações')
+        elif menu_option == 'Avaliações':
             show_reviews()
 
 

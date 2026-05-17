@@ -4,7 +4,7 @@ import requests
 class Auth:
 
     def __init__(self):
-        self.__base_url = 'https://marcosilva.pythonanywhere.com/api/v1/'
+        self.__base_url = 'http://localhost:8000/api/v1/'
         self.__auth_url = f'{self.__base_url}authentication/token/'
 
     def get_token(self, username, password):

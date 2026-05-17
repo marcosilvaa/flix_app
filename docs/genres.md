@@ -1,88 +1,98 @@
-# Módulo de Gêneros
+# Modulo de Generos
 
-O módulo de gêneros é responsável pelo cadastro e listagem de gêneros na aplicação Flix App, permitindo a categorização de filmes por diferentes tipos e estilos.
+O modulo de generos e responsavel pelo cadastro e listagem de generos na aplicacao Flix App, permitindo a categorizacao de filmes.
 
-## Visão Geral
+## Visao Geral
 
-O módulo de gêneros gerencia:
-- Listagem de gêneros cadastrados
-- Cadastro de novos gêneros com nome descritivo
-- Integração com o módulo de filmes para categorização
-- Exibição de dados em formato tabular com AgGrid
+O modulo de generos gerencia:
+- Listagem de generos cadastrados via API
+- Cadastro de novos generos com nome descritivo
+- Validacao de nome vazio e nome duplicado (case-insensitive)
+- Cache de dados em sessao do Streamlit
+- Exibicao de dados em formato tabular com AgGrid
 
-## Estrutura do Módulo
-
-O módulo está organizado da seguinte forma:
+## Estrutura do Modulo
 
 ```
 genres/
 ├── __init__.py
-├── page.py        # Interface de usuário para gêneros
-├── service.py     # Lógica de negócio para gêneros
-└── repository.py  # Camada de acesso a dados para gêneros
+├── page.py        # Interface de usuario para generos (show_genres)
+├── service.py     # Logica de negocio (GenreService)
+└── repository.py  # Comunicacao com a API (GenreRepository)
 ```
 
 ## Componentes
 
 ### page.py
-- **Função**: `show_genres()`
-- **Responsabilidade**: Exibir a interface de listagem e cadastro de gêneros
-- **Características**:
-  - Exibe lista de gêneros em formato tabular com AgGrid
-  - Formulário para cadastro de novo gênero com campo de nome
-  - Tratamento de casos vazios com mensagem de aviso
-  - Feedback para o usuário após operações de cadastro
+
+- **Funcao**: `show_genres()`
+- **Responsabilidade**: Exibir a interface de listagem e cadastro de generos
+- **Caracteristicas**:
+  - Exibe lista de generos em formato tabular com AgGrid (key `genres_grid`)
+  - Formulario para cadastro de novo genero com campo de nome
+  - Validacao de nome vazio com mensagem de erro
+  - Validacao de nome duplicado (case-insensitive) — **Nota**: bug na linha 30, `g['name'].lower` sem parenteses, deveria ser `.lower()`
+  - Feedback de sucesso ou erro apos cadastro
+  - Recarregamento automatico via `st.rerun()` apos cadastro bem-sucedido
 
 ### service.py
+
 - **Classe**: `GenreService`
-- **Responsabilidade**: Implementar a lógica de negócios para gêneros
-- **Características**:
-  - Método `get_genres()`: Obtém a lista de gêneros da API
-  - Método `create_genre()`: Prepara e envia dados para cadastro de gênero
-  - Integração com o repositório para comunicação com a API
-  - Preparação de dados antes de enviar à camada de repositório
+- **Responsabilidade**: Implementar a logica de negocio para generos
+- **Metodos**:
+  - `get_genres()`: Busca generos com cache em `st.session_state.genres`
+  - `create_genre(name)`: Cria dict `{'name': name}`, envia ao repositorio e adiciona ao cache
+- **Injecao de dependencia**: `GenreRepository` instanciado no `__init__`
 
 ### repository.py
+
 - **Classe**: `GenreRepository`
-- **Responsabilidade**: Comunicar-se com a API externa para operações de gêneros
-- **Características**:
-  - URL base e headers configurados com token de autenticação
-  - Métodos para obtenção e criação de gêneros na API
-  - Tratamento de respostas HTTP (200, 201, 401)
-  - Encapsulamento de detalhes de comunicação com a API
-  - Chamada à função `logout()` em caso de falha de autenticação (401)
+- **Responsabilidade**: Comunicar-se com a API externa para operacoes de generos
+- **URL**: `http://localhost:8000/api/v1/genres/`
+- **Headers**: `Authorization: Bearer {token}` de `st.session_state.token`
+- **Metodos**:
+  - `get_genres()`: GET para listar generos (status 200 → JSON, 401 → logout, outros → Exception)
+  - `create_genre(genre)`: POST para criar genero (status 201 → JSON, 401 → logout, outros → Exception)
 
 ## Funcionalidades
 
-### Listagem de Gêneros
-- Exibe gêneros em formato tabular interativo com AgGrid
-- Suporte para ordenação, filtragem e redimensionamento de colunas
-- Tratamento de caso vazio com mensagem amigável ao usuário
-- Atualização automática após operações de criação
+### Listagem de Generos
 
-### Cadastro de Gêneros
-- Formulário com campo para nome do gênero
-- Validação de campos obrigatórios
-- Feedback visual de sucesso ou erro após tentativa de cadastro
+- Busca generos via `GenreService` com cache em session_state
+- Exibe em tabela AgGrid com `reload_data=True`
+- Tratamento de caso vazio com `st.warning("Nenhum genero encontrado!")`
 
-## Integrações
+### Cadastro de Generos
 
-### Com Módulo de Filmes
-- Importação de `GenreService` para obtenção da lista de gêneros
-- Criação de mapeamento nome:id para seleção no formulário de filme
-- Associação do gênero ao filme
+- Campo de texto para nome do genero
+- Validacao: nome vazio → `st.error("O campo nome nao pode estar vazio.")`
+- Validacao: nome duplicado → `st.error('O genero "{name}" ja existe!')`
+- Feedback de sucesso: `st.success(f'Genero: {name} cadastrado com sucesso!')`
+- Recarregamento via `st.rerun()`
 
-## Componentes de UI
+## Integracao com Outros Modulos
 
-- **AgGrid**: Componente para exibição tabular interativa de gêneros
-- **Campos de Texto**: Nome do gênero
-- **Botões**: Cadastro de novo gênero
-- **Mensagens**: Feedback de sucesso ou erro para o usuário
+### Modulo de Filmes
 
-## Padrões de Código
+- `movies/page.py` importa `GenreService` para obter lista de generos
+- Cria mapeamento `nome:id` para selectbox de genero no formulario de filme
 
-- Função de página segue padrão `show_nome_modulo`
-- Serviço implementa injeção de dependência do repositório
-- Repositório encapsula URLs e headers de autenticação
+## Bug Conhecido
+
+Na linha 30 de `genres/page.py`, a validacao de nome duplicado usa:
+```python
+existing_genres = {g['name'].lower for g in genres}
+```
+O acesso `g['name'].lower` retorna o metodo bound em vez de chamá-lo. Deveria ser:
+```python
+existing_genres = {g['name'].lower() for g in genres}
+```
+
+## Padroes de Codigo
+
+- Funcao de pagina segue padrao `show_<modulo>()`
+- Servico implementa injecao de dependencia do repositorio
+- Repositorio encapsula URLs e headers de autenticacao
 - Tratamento consistente de erros HTTP
-- Normalização de dados com `pd.json_normalize()` para exibição
+- Normalizacao de dados com `pd.json_normalize()` para exibicao no AgGrid
+- Cache em `st.session_state` para evitar chamadas repetidas

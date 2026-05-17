@@ -1,5 +1,5 @@
 import streamlit as st
-from st_aggrid import AgGrid
+from st_aggrid import AgGrid, AgGridTheme
 import pandas as pd
 from genres.service import GenreService
 
@@ -10,34 +10,35 @@ def show_genres():
     genres = genre_service.get_genres()
 
     if genres:
-        st.write("Lista de Gêneros")
+        st.subheader('Gêneros Cadastrados')
         genres_df = pd.json_normalize(genres)
         AgGrid(
-            data=genres_df,
+            genres_df,
+            theme=AgGridTheme.STREAMLIT,
             reload_data=True,
-            key='genres_grid'
+            key='genres_grid',
         )
     else:
-        st.warning("Nenhum gênero encontrado!")
+        st.warning('Nenhum gênero encontrado!')
 
-    st.title('Cadastrar novo Gênero')
-    name = st.text_input('Nome do Gênero')
-    if st.button("Cadastrar"):
-        if not name:
-            st.error("O campo nome não pode estar vazio.")
-        else:
+    st.divider()
 
-            existing_genres = {g['name'].lower for g in genres} if genres else set()
-
-            if name.lower() in existing_genres:
-                st.error(f'O gênero "{name}" já existe!')
-
+    with st.expander('Cadastrar novo Gênero', expanded=not genres):
+        name = st.text_input('Nome do Gênero', key='genre_name_input')
+        if st.button('Cadastrar', key='genre_create_btn'):
+            if not name:
+                st.error('O campo nome não pode estar vazio.')
             else:
-                new_genre = genre_service.create_genre(
-                    name=name
-                )
-                if new_genre:
-                    st.success(f'Gênero: {name} cadastrado com sucesso!')
-                    st.rerun()
+                existing_genres = {g['name'].lower() for g in genres} if genres else set()
+
+                if name.lower() in existing_genres:
+                    st.error(f'O gênero "{name}" já existe!')
                 else:
-                    st.error('Erro ao cadastrar o Gênero. Verifique os campos')
+                    new_genre = genre_service.create_genre(
+                        name=name
+                    )
+                    if new_genre:
+                        st.success(f'Gênero: {name} cadastrado com sucesso!')
+                        st.rerun()
+                    else:
+                        st.error('Erro ao cadastrar o Gênero. Verifique os campos')

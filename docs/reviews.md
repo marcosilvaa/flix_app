@@ -1,84 +1,108 @@
-# Módulo de Avaliações
+# Modulo de Avaliacoes
 
-O módulo de avaliações é responsável pela exibição e cadastro de avaliações de filmes na aplicação Flix App. Atualmente, este módulo encontra-se em fase inicial de desenvolvimento com implementação parcial.
+O modulo de avaliacoes e responsavel pela listagem e cadastro de avaliacoes de filmes na aplicacao Flix App, com integracao completa com a API externa.
 
-## Visão Geral
+## Visao Geral
 
-O módulo de avaliações gerencia:
-- Listagem de avaliações cadastradas
-- Interface para cadastro de novas avaliações
-- Exibição de dados em formato tabular com AgGrid
-- **Status**: Implementação parcial, não integrado com a API externa
+O modulo de avaliacoes gerencia:
+- Listagem de avaliacoes cadastradas via API
+- Cadastro de novas avaliacoes vinculadas a filmes
+- Selecao de filme via dropdown com dados da API
+- Validacao de estrelas (0 a 5)
+- Exibicao de dados em formato tabular com AgGrid
 
-## Estrutura do Módulo
-
-O módulo está organizado da seguinte forma:
+## Estrutura do Modulo
 
 ```
 reviews/
 ├── __init__.py
-└── page.py        # Interface de usuário para avaliações (implementação parcial)
+├── page.py         # Interface de usuario para avaliacoes
+├── service.py      # Logica de negocio (ReviewService)
+└── repository.py   # Camada de comunicacao com a API (ReviewRepository)
 ```
 
 ## Componentes
 
 ### page.py
-- **Função**: `show_reviews()`
-- **Responsabilidade**: Exibir a interface de listagem e cadastro de avaliações
-- **Características**:
-  - Exibe lista de avaliações em formato tabular com AgGrid (dados estáticos por enquanto)
-  - Formulário para cadastro de novas avaliações (funcionalidade limitada)
-  - Implementação parcial - dados não são persistidos nem integrados com a API
-  - Exemplo com dados mockados para demonstração
 
-## Funcionalidades Atuais
+- **Funcao**: `show_reviews()`
+- **Responsabilidade**: Exibir a interface de listagem e cadastro de avaliacoes
+- **Dependencias**: `reviews.service.ReviewService`, `movies.services.MovieService`
+- **Caracteristicas**:
+  - Exibe lista de avaliacoes em formato tabular com AgGrid
+  - Formulario para cadastro de nova avaliacao com:
+    - Selecao de filme via `st.selectbox` (mapeamento titulo:id)
+    - Estrelas via `st.number_input` (0 a 5, step 1)
+    - Comentario via `st.text_area`
+  - Feedback de sucesso ou erro apos cadastro
+  - Recarregamento automatico da pagina apos cadastro bem-sucedido
+- **Problema conhecido**: Variavel nomeada `revies_service` na linha 9 — typo, deveria ser `reviews_service`
 
-### Listagem de Avaliações
-- Exibe avaliações em formato tabular interativo com AgGrid
-- Utiliza dados mockados definidos como variável `reviews` no início do arquivo
-- Coluna de identificação e estrelas como exemplo de estrutura
+### service.py
 
-### Cadastro de Avaliações
-- Formulário com campo para "nota da avaliação"
-- Funcionalidade limitada sem persistência de dados
-- Feedback visual de sucesso após tentativa de cadastro
+- **Classe**: `ReviewService`
+- **Responsabilidade**: Implementar a logica de negocio para avaliacoes
+- **Caracteristicas**:
+  - Metodo `get_reviews()`: Busca avaliacoes com cache em `st.session_state`
+  - Metodo `create_review(movie, stars, comment)`: Prepara dados e envia ao repositorio
+  - Adiciona nova avaliacao ao cache apos criacao bem-sucedida
+  - Integracao com `ReviewRepository` para comunicacao com a API
 
-## Limitações Atuais
+### repository.py
 
-### Implementação Incompleta
-- Módulo não está integrado com a API externa
-- Dados são armazenados localmente como variáveis estáticas
-- Não há persistência real de avaliações
-- Funcionalidades de edição ou exclusão não estão implementadas
-- Não há relacionamento com os módulos de filmes ou usuários
-- Estrutura de dados de avaliações é simplificada e provisória
+- **Classe**: `ReviewRepository`
+- **Responsabilidade**: Comunicar-se com a API externa para operacoes de avaliacoes
+- **Caracteristicas**:
+  - URL: `http://localhost:8000/api/v1/reviews/`
+  - Headers com token JWT de `st.session_state.token`
+  - Metodo `get_reviews()`: GET para listar avaliacoes
+  - Metodo `create_review(review)`: POST para criar avaliacao
+  - Tratamento de respostas HTTP (200, 201, 401)
+  - Chamada a `logout()` em caso de falha de autenticacao (401)
 
-### Arquitetura Incompleta
-- Ausência de camadas de serviço e repositório
-- Não segue o padrão de arquitetura em camadas dos outros módulos
-- Não utiliza token de autenticação para operações
-- Não implementa validações completas
+## Funcionalidades
 
-## Componentes de UI
+### Listagem de Avaliacoes
 
-- **AgGrid**: Componente para exibição tabular interativa de avaliações
-- **Campos de Texto**: Nota da avaliação
-- **Botões**: Cadastro de nova review
-- **Mensagens**: Feedback de sucesso para o usuário
+- Busca avaliacoes da API via `ReviewService`
+- Exibe em tabela interativa com AgGrid (key `movies_grid`)
+- Tratamento de caso vazio com `st.warning()`
 
-## Futuras Implementações
+### Cadastro de Avaliacoes
 
-Para completar o módulo de avaliações, seriam necessárias as seguintes implementações:
-- Camadas de serviço e repositório seguindo o padrão da aplicação
-- Integração com a API externa para persistência de dados
-- Relacionamento com entidades de filmes e usuários
-- Sistema de estrelas ou esquema de classificação mais completo
-- Validações de negócio adequadas
-- Funcionalidades de edição e exclusão de avaliações
+- Selecao de filme: busca lista de filmes via `MovieService`, cria mapeamento `titulo:id`
+- Estrelas: inteiro de 0 a 5
+- Comentario: texto livre
+- Apos cadastro bem-sucedido, recarrega a pagina com `st.rerun()`
 
-## Padrões de Código
+## Integracao com MovieService
 
-A implementação atual não segue completamente os padrões da aplicação, pois:
-- Não implementa o padrão de arquitetura em camadas
-- Não utiliza serviço e repositório para persistência
-- Utiliza dados mockados em vez de dados reais da API
+O formulario de avaliacao importa `MovieService` de `movies.services` para:
+1. Obter a lista de filmes disponiveis
+2. Criar um dicionario mapeando `titulo -> id`
+3. Permitir selecao do filme pelo titulo no `st.selectbox`
+4. Enviar o ID do filme ao criar a avaliacao
+
+## Fluxo de Dados
+
+```
+show_reviews()
+  → ReviewService.get_reviews()
+    → ReviewRepository.get_reviews()
+      → GET /api/v1/reviews/
+  → MovieService.get_movies()
+    → MovieRepository.get_movies()
+      → GET /api/v1/movies/
+  → ReviewService.create_review(movie, stars, comment)
+    → ReviewRepository.create_review(review)
+      → POST /api/v1/reviews/
+```
+
+## Padroes de Codigo
+
+- Funcao de pagina segue padrao `show_<modulo>()`
+- Servico implementa injecao de dependencia do repositorio
+- Repositorio encapsula URLs e headers de autenticacao
+- Normalizacao de dados com `pd.json_normalize()` para exibicao no AgGrid
+- Cache de avaliacoes em `st.session_state.reviews`
+- Uso de `st.rerun()` para atualizar a interface apos cadastro

@@ -1,80 +1,80 @@
-# Módulo de Login
+# Modulo de Login
 
-O módulo de login é responsável pela autenticação de usuários na aplicação Flix App, implementando um sistema de autenticação baseado em JWT (JSON Web Tokens).
+O modulo de login e responsavel pela autenticacao de usuarios na aplicacao Flix App, implementando um sistema baseado em JWT (JSON Web Tokens).
 
-## Visão Geral
+## Visao Geral
 
-O módulo de login gerencia:
-- Interface de login para entrada de credenciais de usuário
-- Autenticação com a API externa via JWT
-- Armazenamento seguro do token na sessão do Streamlit
-- Gerenciamento de logout e limpeza de sessão
+O modulo de login gerencia:
+- Interface de login para entrada de credenciais (usuario e senha)
+- Autenticacao com a API externa via JWT
+- Armazenamento do token na sessao do Streamlit (`st.session_state.token`)
+- Gerenciamento de logout com limpeza completa da sessao
 
-## Estrutura do Módulo
-
-O módulo está organizado da seguinte forma:
+## Estrutura do Modulo
 
 ```
 login/
 ├── __init__.py
-├── page.py      # Interface de usuário para login
-└── service.py   # Lógica de autenticação e sessão
+└── page.py       # Interface de login (show_login)
+└── service.py     # Funcoes login() e logout()
 ```
+
+O modulo de login usa funcoes (nao classes) para a camada de servico, diferente dos outros modulos que usam classes Service.
 
 ## Componentes
 
 ### page.py
-- **Função**: `show_login()`
-- **Responsabilidade**: Exibir a interface de login com campos para usuário e senha
-- **Características**:
-  - Formulário com campos de texto para usuário e senha (oculta)
-  - Botão de login que aciona o processo de autenticação
-  - Exibição de erros de autenticação
+
+- **Funcao**: `show_login()`
+- **Responsabilidade**: Exibir a interface de login com campos para usuario e senha
+- **Caracteristicas**:
+  - Campo `st.text_input` para usuario
+  - Campo `st.text_input` com `type='password'` para senha (oculta)
+  - Botao "Login" que aciona a funcao `login(username, password)`
+  - Mensagens de erro sao gerenciadas pela funcao `login()` do service
 
 ### service.py
-- **Funções**: `login()` e `logout()`
-- **Responsabilidade**: Gerenciar o processo de autenticação e sessão
-- **Características**:
-  - Função `login()`: Chama o serviço de autenticação para obter token JWT
-  - Armazenamento do token em `st.session_state.token`
-  - Função `logout()`: Limpa todos os dados da sessão e redireciona para login
-  - Tratamento de erros de autenticação
 
-### api/service.py
+- **Funcoes**: `login()` e `logout()`
+- **`login(username, password)`**:
+  1. Cria instancia de `Auth` do modulo `api.service`
+  2. Chama `auth_service.get_token(username, password)`
+  3. Se a resposta contem a chave `error`, exibe `st.error()` com a mensagem
+  4. Se bem-sucedido, armazena o token em `st.session_state.token` e chama `st.rerun()`
+- **`logout()`**:
+  1. Itera sobre todas as chaves de `st.session_state` e as remove
+  2. Chama `st.rerun()` para redirecionar para a tela de login
+
+### api/service.py (Classe Auth)
+
 - **Classe**: `Auth`
-- **Responsabilidade**: Comunicação com a API de autenticação externa
-- **Características**:
-  - Realiza requisição POST para `/authentication/token/`
-  - Retorna token JWT em caso de credenciais válidas
-  - Tratamento de erros de autenticação
+- **Responsabilidade**: Comunicacao com a API de autenticacao externa
+- **`__init__()`**:
+  - `self.__base_url = 'http://localhost:8000/api/v1/'`
+  - `self.__auth_url = f'{self.__base_url}authentication/token/'`
+- **`get_token(username, password)`**:
+  - Envia POST com `data={'username': username, 'password': password}`
+  - Retorna `response.json()` em caso de status 200 (contem chave `access` com o token JWT)
+  - Retorna `{"error": "Erro ao autenticar. Status code: ..."}` em caso de falha
 
-## Fluxo de Autenticação
+## Fluxo de Autenticacao
 
-1. **Acesso à Aplicação**: Sistema verifica existência de token na sessão
-2. **Sem Token**: Usuário é redirecionado para a tela de login
-3. **Formulário de Login**: Usuário insere credenciais (usuário/senha)
-4. **Processo de Autenticação**: 
-   - Função `login()` é chamada
-   - Serviço `Auth.get_token()` realiza chamada à API externa
-   - Em caso de sucesso, token é armazenado em `st.session_state.token`
-5. **Autenticação Bem-Sucedida**: Aplicação é reiniciada e usuário acessa o conteúdo protegido
-6. **Logout**: Ao fazer logout, toda a sessão é limpa (`st.session_state`)
+```
+app.py verifica st.session_state.token
+├── Token ausente → show_login()
+│   ├── Usuario preenche credenciais
+│   ├── click "Login" → login(username, password)
+│   │   ├── Auth.get_token(username, password)
+│   │   │   └── POST /authentication/token/ → response
+│   │   ├── Sucesso: st.session_state.token = response['access'] → st.rerun()
+│   │   └── Falha: st.error(mensagem de erro)
+│   └── Pagina recarregada com token → acesso ao menu lateral
+└── Token presente → exibe menu lateral com opcoes
+```
 
-## Componentes de UI
+## Seguranca
 
-- **Campos de Entrada**: Usuário e senha (senha oculta)
-- **Botão de Login**: Aciona o processo de autenticação
-- **Mensagens**: Exibição de erros de autenticação, se necessário
-
-## Segurança
-
-- Tokens JWT armazenados temporariamente na sessão do Streamlit
-- Em caso de falha de autenticação (401), sessão é automaticamente limpa
-- Sistema de logout remove completamente todos os dados da sessão
-- Credenciais não são armazenadas no cliente
-
-## Padrões de Código
-
-- Funções de autenticação seguem convenções de tratamento de erros
-- Armazenamento de token utiliza chave `token` no `st.session_state`
-- Função `logout()` itera sobre todas as chaves do estado para garantir limpeza completa
+- Tokens JWT armazenados temporariamente em `st.session_state`
+- Credenciais nao sao persistidas — apenas enviadas na requisicao de autenticacao
+- Em caso de resposta 401 de qualquer endpoint, `logout()` e chamado automaticamente
+- `logout()` remove todas as chaves de `st.session_state`, incluindo o token e caches de dados
